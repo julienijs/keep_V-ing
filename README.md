@@ -6,9 +6,14 @@ In present day English the verb *keep* occurs in two related constructions, wher
 1. She keeps (on) dancing.
 2. She kept the fire burning.
 
-Like (Petré and Van de Velde 2018) this study relies on grammaticalization scores to create a distributional profile of the two constructions with *keep*.
-
-
+The data was collected from the EMMA corpus (Petré et al. 2019). Like Petré and Van de Velde (2018) this study relies on grammaticalization scores to create a distributional profile of the two constructions with *keep*. Seven variables were taken into account: 
+1. innovativeness of the ing-form (top 15 collocates) 
+2. bondedness
+3. inclusion of an explicit continuative marker
+4. animacy of the subject
+5. presence of a motion verb
+6. telicity of the verb
+7. coordination with an adjective
 
 ## References:
 - De Smet, Hendrik. 2013. *Spreading Patterns: diffusional change in the English system of complementation*. Oxford: Oxford University Press.
