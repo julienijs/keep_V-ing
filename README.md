@@ -6,6 +6,8 @@ In present day English the verb *keep* occurs in two related constructions, wher
 1. She keeps (on) dancing.
 2. She kept the fire burning.
 
+## Data and code
+
 The data was collected from the EMMA corpus (Petré et al. 2019). Like Petré and Van de Velde (2018) this study relies on grammaticalization scores to create a distributional profile of the two constructions with *keep*. Seven variables were taken into account: 
 1. innovativeness of the ing-form (top 15 collocates) 
 2. bondedness
