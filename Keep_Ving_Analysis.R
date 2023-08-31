@@ -123,6 +123,7 @@ Fixed_Only <- glm(as.factor(Construction) ~
                   data=keep)
 
 summary(Fixed_Only) # Higher AIC --> model is worse
+plot(allEffects(Fixed_Only))
 
 # Make plots
 Animacy <- table(keep$Construction, keep$Animacy)
