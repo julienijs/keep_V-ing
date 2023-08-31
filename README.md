@@ -22,4 +22,4 @@ The data was collected from the EMMA corpus (Petré et al. 2019). Like Petré an
 - Petré, Peter, Lynn Anthonissen, Sara Budts, Enrique Manjavacas, William Standing & Odile A.O. Strik. 2019. Early-Modern Multiloquent Authors (EMMA): Designing a large-scale corpus of individuals’ languages. *ICAME journal*, manuscript.
 
 Own research output:
-- Nijs, Julie & Freek Van de Velde. 2023. Does the construction keep on grammaticalizing? presentation at ICEHL: Sheffield. July 2023.
+- Nijs, Julie & Freek Van de Velde. 2023. Does the construction keep on grammaticalizing? presentation at ICEHL: Sheffield. July 2023. [abstract](https://kuleuven.limo.libis.be/discovery/search?query=any,contains,LIRIAS4083926&tab=LIRIAS&search_scope=lirias_profile&vid=32KUL_KUL:Lirias&offset=0)
