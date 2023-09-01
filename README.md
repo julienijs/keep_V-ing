@@ -16,6 +16,9 @@ The data was collected from the EMMA corpus (Petré et al. 2019). Like Petré an
 5. presence of a motion verb
 6. coordination with an adjective
 
+![Construction vs generation](https://github.com/julienijs/keep_V-ing/assets/107923146/537fd3e5-94ba-46ee-a56d-97add7ead98b)
+
+
 ## References:
 - De Smet, Hendrik. 2013. *Spreading Patterns: diffusional change in the English system of complementation*. Oxford: Oxford University Press.
 - Petré, Peter & Freek Van de Velde. 2018. The real-time dynamics of the individual and the community in grammaticalization. *Language 94*(4). 867-901.
