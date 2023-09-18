@@ -55,7 +55,7 @@ print(author_table) # some authors occur very frequently, others a lot less
 # Step 1: Count occurrences of each author
 author_counts <- keep %>%
   group_by(author) %>%
-  summarize(count = n())
+  dplyr::summarize(count = n())
 
 # Step 2: Create a new factor column with 'others' for authors with <= 5 occurrences
 keep <- keep %>%
@@ -99,7 +99,7 @@ keep$Continuative_marker <- relevel(keep$Continuative_marker, ref = "Present")
 
 # Make models:
 # With random effect
-Fixed_and_Random <- glmer(as.factor(Construction) ~ 
+Fixed_and_Random <- glmer(Construction ~ 
                             Animacy + 
                             Verb_innovation +
                             Bondedness + 
@@ -227,4 +227,3 @@ print(gen_plot <- ggplot(keep_summary,
                       position=position_dodge(0.01))+ 
         guides(color=guide_legend(title="Construction")))
 
-#### Individuals ####
