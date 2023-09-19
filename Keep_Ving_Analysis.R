@@ -230,10 +230,7 @@ print(gen_plot <- ggplot(keep_summary,
 
 #### Individuals ####
 
-# Load necessary libraries
-library(ggplot2)
-
-# Calculate the proportion of Construction for each author and decade
+# Calculate the proportion of Continuative construction for each author and decade
 proportion_data <- keep %>%
   filter(author_grouped != "others") %>%
   group_by(author_grouped, textDecade) %>%
