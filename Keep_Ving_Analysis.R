@@ -227,3 +227,22 @@ print(gen_plot <- ggplot(keep_summary,
                       position=position_dodge(0.01))+ 
         guides(color=guide_legend(title="Construction")))
 
+
+#### Individuals ####
+
+# Load necessary libraries
+library(ggplot2)
+
+# Calculate the proportion of Construction for each author and birth date
+proportion_data <- keep %>%
+  filter(author_grouped != "others") %>%
+  group_by(author_grouped, textDecade) %>%
+  dplyr::summarize(Proportion = sum(Construction == "Continuative") / n())
+
+ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_grouped)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Decade", y = "Proportion of Continuative construction") +
+  facet_wrap(~ author_grouped, ncol = 3) +  # Create separate plots for each author
+  theme_minimal() +
+  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1"))
