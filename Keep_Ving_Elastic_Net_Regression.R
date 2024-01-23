@@ -39,10 +39,10 @@ net <- elastic_net(ds=ds,
                    nfolds=20,
                    type.measure="class")
 
-fit <- net$do_elastic_net_regression_auto_alpha(k=10)
+models <- net$do_elastic_net_regression_auto_alpha(k=10)
 
-fit$results
-fit$fits
+models$results
+models$fits
 
 fit <- net$do_elastic_net_regression(alpha=0.1)
 
