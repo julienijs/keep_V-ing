@@ -46,8 +46,9 @@ models <- net$do_elastic_net_regression_auto_alpha(k=10)
 models$results
 models$fits
 
-fit <- net$do_elastic_net_regression(alpha=0.1)
+fit <- net$do_elastic_net_regression(alpha=0.6)
 
 coefficients_with_labels <- net$attach_coefficients(fit)
 
-names(coefficients_with_labels)[names(coefficients_with_labels) == "feature"] <- "Author"
+# save to csv
+write.csv(coefficients_with_labels, "elastic_net_output.csv", row.names=FALSE)
