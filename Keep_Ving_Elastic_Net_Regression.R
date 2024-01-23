@@ -1,11 +1,11 @@
 # Loading libraries and packages
 
-# from https://github.com/AntheSevenants/ElasticToolsR :
 install.packages(c("glmnet", "doMC"))
+library(readxl)
+
+# from https://github.com/AntheSevenants/ElasticToolsR :
 source("Dataset.R")
 source("ElasticNet.R")
-
-library(readxl)
 
 #### Read dataset ####
 keep <- read_xlsx("Keep_Ving_Dataset.xlsx", 
