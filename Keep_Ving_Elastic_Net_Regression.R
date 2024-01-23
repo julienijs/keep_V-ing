@@ -15,16 +15,18 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
-subset <- keep[, c("Construction", "author", "textDecade")]
+subset <- keep[, c("Construction", "author", "Animacy", "Verb_innovation")]
 
 # convert author & Change to factor
 subset$Construction <- as.factor(subset$Construction)
 subset$author <- as.factor(subset$author)
+subset$Animacy <- as.factor(subset$Animacy)
+subset$Verb_innovation <- as.factor(subset$Verb_innovation)
 
 ds <- dataset(df=subset,
               response_variable_column="Construction",
               to_binary_columns=c("author"),
-              other_columns=c("textDecade"))
+              other_columns=c("Animacy", "Verb_innovation"))
 
 # convert the data to a feature matrix
 feature_matrix <- ds$as_matrix()
