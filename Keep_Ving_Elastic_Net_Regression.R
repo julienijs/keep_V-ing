@@ -52,3 +52,30 @@ coefficients_with_labels <- net$attach_coefficients(fit)
 
 # save to csv
 write.csv(coefficients_with_labels, "elastic_net_output.csv", row.names=FALSE)
+
+# visualisation
+
+barplot(coefficients_with_labels$coefficient, 
+        names.arg = coefficients_with_labels$feature, 
+        col = "lightblue")
+
+# Logistic function to convert log-odds to probabilities
+logistic <- function(x) {
+  1 / (1 + exp(-x))
+}
+
+# Calculate the predicted probabilities for the new observation
+probabilities <- logistic(coefficients_with_labels$coefficient)
+
+# Create scatter plot with probabilities
+plot(x = probabilities, y = seq_along(probabilities), pch = 16, col = "black",
+     xlab = "Probability of the continuative construction", ylab = "",
+     xlim = c(0, 1))
+
+# Add feature labels
+text(x = probabilities, y = seq_along(probabilities), 
+     labels = coefficients_with_labels$feature, pos = 4, cex = 0.8)
+
+# Customize x-axis labels with adjusted position
+axis(1, at = seq(0, 1, by = 0.1), labels = c("complex-transitive", rep("", 8), "continuative"), adj = 0.5)
+
