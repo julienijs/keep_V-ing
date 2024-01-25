@@ -44,7 +44,7 @@ net <- elastic_net(ds=ds,
 models <- net$do_elastic_net_regression_auto_alpha(k=10)
 
 models$results
-models$fits
+#models$fits
 
 fit <- net$do_elastic_net_regression(alpha=0.6)
 
@@ -69,13 +69,15 @@ probabilities <- logistic(coefficients_with_labels$coefficient)
 
 # Create scatter plot with probabilities
 plot(x = probabilities, y = seq_along(probabilities), pch = 16, col = "black",
-     xlab = "Probability of the continuative construction", ylab = "",
-     xlim = c(0, 1))
+     xlab = "", ylab = "",
+     xlim = c(0, 1), xaxt = "n")
 
 # Add feature labels
 text(x = probabilities, y = seq_along(probabilities), 
      labels = coefficients_with_labels$feature, pos = 4, cex = 0.8)
 
 # Customize x-axis labels with adjusted position
-axis(1, at = seq(0, 1, by = 0.1), labels = c("complex-transitive", rep("", 8), "continuative"), adj = 0.5)
+axis(1, at = seq(0, 1, by = 0.1), 
+     labels = c("complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "continuative"), 
+     adj = 0.5)
 
