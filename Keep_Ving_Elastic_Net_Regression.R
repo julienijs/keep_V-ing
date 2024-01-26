@@ -70,7 +70,7 @@ probabilities <- logistic(coefficients_with_labels$coefficient)
 # Create scatter plot with probabilities
 plot(x = probabilities, y = seq_along(probabilities), pch = 16, col = "black",
      xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n")
+     xlim = c(0, 1), xaxt = "n", yaxt = "n")
 
 # Add feature labels
 text(x = probabilities, y = seq_along(probabilities), 
@@ -78,7 +78,7 @@ text(x = probabilities, y = seq_along(probabilities),
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "continuative"), 
+     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
      adj = 0.5)
 
 #### Visualization when the subject is inanimate ####
@@ -93,7 +93,7 @@ probabilities_with_inanimate <- logistic(coefficients_with_inanimate)
 # Create scatter plot with probabilities including the effect of _is_Inanimate
 plot(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimate), pch = 16, col = "black",
      xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n")
+     xlim = c(0, 1), xaxt = "n", yaxt = "n")
 
 # Add feature labels
 text(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimate), 
@@ -101,7 +101,7 @@ text(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimat
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "continuative"), 
+     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
      adj = 0.5)
 
 
@@ -117,15 +117,14 @@ probabilities_with_innovative <- logistic(coefficients_with_innovative)
 # Create scatter plot with probabilities including the effect of _is_Innovative_verb
 plot(x = probabilities_with_innovative, y = seq_along(probabilities_with_innovative), pch = 16, col = "black",
      xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n")
+     xlim = c(0, 1), xaxt = "n", yaxt = "n")
 
 # Add feature labels
 text(x = probabilities_with_innovative, y = seq_along(probabilities_with_innovative), 
-     labels = coefficients_with_labels$feature, pos = 4, cex = 0.8)
+     labels = coefficients_with_labels$feature, pos = 2, cex = 0.8)
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "continuative"), 
+     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
      adj = 0.5)
-
 
