@@ -51,20 +51,6 @@ plot(Generation,
 author_table <- table(keep$author)
 print(author_table) # some authors occur very frequently, others a lot less
 
-# Group infrequent authors together:
-# Step 1: Count occurrences of each author
-author_counts <- keep %>%
-  group_by(author) %>%
-  dplyr::summarize(count = n())
-
-# Step 2: Create a new factor column with 'others' for authors with <= 5 occurrences
-keep <- keep %>%
-  left_join(author_counts, by = "author") %>%
-  mutate(author_grouped = factor(ifelse(count <= 5, "others", author)))
-
-# Step 3: Relevel the 'author_grouped' factor with 'others' as the reference level
-keep$author_grouped <- relevel(keep$author_grouped, ref = "others")
-
 #### Grammaticalization scores over time ####
 
 Decade_model <- lm(Score ~ textDecade, data = keep)
@@ -73,7 +59,7 @@ plot(allEffects(Decade_model))
 
 Score_model <- lm(textDecade ~
                     Animacy_score +
-                    Continuative_score +
+                    Durative_score +
                     Bondedness_score +
                     Motion_score +
                     Verb_score,
@@ -81,11 +67,11 @@ Score_model <- lm(textDecade ~
 summary(Score_model)
 plot(allEffects(Score_model))
 
-#### Question 1: which variables distinguish between complex-transitive and pure continuative keep? ####
+#### Question 1: which variables distinguish between transitive and pure intransitive keep? ####
 
 # Convert to factors and relevel
 keep$Construction <- as.factor(keep$Construction)
-keep$Construction <- relevel(keep$Construction, ref = "Complex-transitive")
+keep$Construction <- relevel(keep$Construction, ref = "Transitive")
 keep$Animacy <- as.factor(keep$Animacy)
 keep$Animacy <- relevel(keep$Animacy, ref = "Animate")
 keep$Verb_innovation <- as.factor(keep$Verb_innovation)
@@ -94,8 +80,8 @@ keep$Motion_verb <- as.factor(keep$Motion_verb)
 keep$Motion_verb <- relevel(keep$Motion_verb, ref = "Motion verb")
 keep$Bondedness <- as.factor(keep$Bondedness)
 keep$Bondedness <- relevel(keep$Bondedness, ref = "Low bondedness")
-keep$Continuative_marker <- as.factor(keep$Continuative_marker)
-keep$Continuative_marker <- relevel(keep$Continuative_marker, ref = "Present")
+keep$Durative_marker <- as.factor(keep$Durative_marker)
+keep$Durative_marker <- relevel(keep$Durative_marker, ref = "Present")
 
 # Make models:
 # With random effect
@@ -104,7 +90,7 @@ Fixed_and_Random <- glmer(Construction ~
                             Verb_innovation +
                             Bondedness + 
                             Motion_verb +
-                            Continuative_marker + 
+                            Durative_marker + 
                             (1|author_grouped), 
                           family=binomial(link = "logit"), 
                           data=keep)
@@ -118,14 +104,14 @@ Fixed_Only <- glm(as.factor(Construction) ~
                     Verb_innovation +
                     Bondedness + 
                     Motion_verb +
-                    Continuative_marker, 
+                    Durative_marker, 
                   family=binomial(link="logit"), 
                   data=keep)
 
 summary(Fixed_Only) # Higher AIC --> model is worse
 plot(allEffects(Fixed_Only))
 
-# Make plots
+# Make bivariate plots
 Animacy <- table(keep$Construction, keep$Animacy)
 print(Animacy)
 chisq.test(Animacy)
@@ -158,12 +144,12 @@ plot(Motion_verb,
      ylab = "Motion verb",
      main = "")
 
-Continuative_marker <- table(keep$Construction, keep$Continuative_marker)
-print(Continuative_marker)
-chisq.test(Continuative_marker)
-plot(Continuative_marker,
+Durative_marker <- table(keep$Construction, keep$Durative_marker)
+print(Durative_marker)
+chisq.test(Durative_marker)
+plot(Durative_marker,
      xlab = "Construction",
-     ylab = "Continuative marker",
+     ylab = "Durative marker",
      main = "")
 
 #### Question 2: How have the constructions grammaticalized over the generations? ####
@@ -230,17 +216,17 @@ print(gen_plot <- ggplot(keep_summary,
 
 #### Individuals ####
 
-# Calculate the proportion of Continuative construction for each author and decade
+# Calculate the proportion of intransitive construction for each author and decade
 proportion_data <- keep %>%
   filter(author_grouped != "others") %>%
   group_by(author_grouped, textDecade) %>%
-  dplyr::summarize(Proportion = sum(Construction == "Continuative") / n())
+  dplyr::summarize(Proportion = sum(Construction == "Intransitive") / n())
 
 # Plot
 ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_grouped)) +
   geom_line() +
   geom_point() +
-  labs(x = "Decade", y = "Proportion of Continuative construction") +
+  labs(x = "Decade", y = "Proportion of intransitive construction") +
   facet_wrap(~ author_grouped, ncol = 3) +  # Create separate plots for each author
   theme_minimal() +
   scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1")) +
