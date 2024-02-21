@@ -15,18 +15,22 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
-subset <- keep[, c("Construction", "author", "Animacy", "Verb_innovation")]
+subset <- keep[, c("Construction", "author", "Animacy", "Verb_innovation", "Motion_verb", "Adjective", "Bondedness", "Continuative_marker")]
 
 # Convert author & Change to factor
 subset$Construction <- as.factor(subset$Construction)
 subset$author <- as.factor(subset$author)
 subset$Animacy <- as.factor(subset$Animacy)
 subset$Verb_innovation <- as.factor(subset$Verb_innovation)
+subset$Motion_verb <- as.factor(subset$Motion_verb)
+subset$Adjective <- as.factor(subset$Adjective)
+subset$Bondedness <- as.factor(subset$Bondedness)
+subset$Continuative_marker <- as.factor(subset$Continuative_marker)
 
 ds <- dataset(df=subset,
               response_variable_column="Construction",
               to_binary_columns=c("author"),
-              other_columns=c("Animacy", "Verb_innovation"))
+              other_columns=c("Animacy", "Verb_innovation", "Motion_verb", "Adjective", "Bondedness", "Continuative_marker"))
 
 # Convert the data to a feature matrix
 feature_matrix <- ds$as_matrix()
@@ -46,7 +50,7 @@ models <- net$do_elastic_net_regression_auto_alpha(k=10)
 models$results
 #models$fits
 
-fit <- net$do_elastic_net_regression(alpha=0.6)
+fit <- net$do_elastic_net_regression(alpha=0.4)
 
 coefficients_with_labels <- net$attach_coefficients(fit)
 
@@ -78,7 +82,7 @@ text(x = probabilities, y = seq_along(probabilities),
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
+     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
      adj = 0.5)
 
 #### Visualization when the subject is inanimate ####
@@ -101,7 +105,7 @@ text(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimat
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
+     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
      adj = 0.5)
 
 
@@ -125,6 +129,6 @@ text(x = probabilities_with_innovative, y = seq_along(probabilities_with_innovat
 
 # Customize x-axis labels with adjusted position
 axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Complex-transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Continuative"), 
+     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
      adj = 0.5)
 
