@@ -245,3 +245,4 @@ ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_group
   theme_minimal() +
   scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1")) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
