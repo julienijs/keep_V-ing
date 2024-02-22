@@ -14,6 +14,8 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
+#### General information about the dataset ####
+
 # Check number of attestations per generation
 generation_table <- table(keep$generation)
 print(generation_table)
@@ -27,7 +29,6 @@ generation_histogram <- barplot(generation_table, ylab = "Number of attestations
                                 col = "grey", 
                                 ylim = c(0, 120))
 
-#### General information about the dataset ####
 # Histogram of the raw scores
 score_table <- table(keep$Score)
 mean(keep$Score)
@@ -53,63 +54,139 @@ print(author_table) # some authors occur very frequently, others a lot less
 
 #### Grammaticalization scores over time ####
 
-Decade_model <- lm(Score ~ textDecade, data = keep)
+# Standardizing the scores
+keep$StandScores <- (keep$Score-mean(keep$Score))/sd(keep$Score)
+keep$StandAnimacy_score <- (keep$Animacy_score-mean(keep$Animacy_score))/sd(keep$Animacy_score)
+keep$StandDurative_score <- (keep$Durative_score-mean(keep$Durative_score))/sd(keep$Durative_score)
+keep$StandBondedness_score <- (keep$Bondedness_score-mean(keep$Bondedness_score))/sd(keep$Bondedness_score)
+keep$StandMotion_score <- (keep$Motion_score-mean(keep$Motion_score))/sd(keep$Motion_score)
+keep$StandVerb_score <- (keep$Verb_score-mean(keep$Verb_score))/sd(keep$Verb_score)
+keep$StandAdjective_score <- (keep$Adjective_score-mean(keep$Adjective_score))/sd(keep$Adjective_score)
+
+# Score vs text date
+Decade_model <- lm(StandScores ~ textDecade, data = keep)
 summary(Decade_model)
 plot(allEffects(Decade_model))
 
+# Text date vs grammaticalization variables
 Score_model <- lm(textDecade ~
-                    Animacy_score +
-                    Durative_score +
-                    Bondedness_score +
-                    Motion_score +
-                    Verb_score,
+                    StandAnimacy_score +
+                    StandDurative_score +
+                    StandBondedness_score +
+                    StandMotion_score +
+                    StandVerb_score +
+                    StandAdjective_score,
                   data = keep)
 summary(Score_model)
 plot(allEffects(Score_model))
 
-#### Question 1: which variables distinguish between transitive and pure intransitive keep? ####
+# Create a line plot
+ggplot(keep, aes(x = textDecade, y = StandAnimacy_score)) +
+  geom_point() +
+  labs(x = "Text Decade", y = "Animacy Score", title = "Text Decade vs. Animacy Score")
 
-# Convert to factors and relevel
-keep$Construction <- as.factor(keep$Construction)
-keep$Construction <- relevel(keep$Construction, ref = "Transitive")
-keep$Animacy <- as.factor(keep$Animacy)
-keep$Animacy <- relevel(keep$Animacy, ref = "Animate")
-keep$Verb_innovation <- as.factor(keep$Verb_innovation)
-keep$Verb_innovation <- relevel(keep$Verb_innovation, ref = "Collexeme")
-keep$Motion_verb <- as.factor(keep$Motion_verb)
-keep$Motion_verb <- relevel(keep$Motion_verb, ref = "Motion verb")
-keep$Bondedness <- as.factor(keep$Bondedness)
-keep$Bondedness <- relevel(keep$Bondedness, ref = "Low bondedness")
-keep$Durative_marker <- as.factor(keep$Durative_marker)
-keep$Durative_marker <- relevel(keep$Durative_marker, ref = "Present")
 
-# Make models:
-# With random effect
-Fixed_and_Random <- glmer(Construction ~ 
-                            Animacy + 
-                            Verb_innovation +
-                            Bondedness + 
-                            Motion_verb +
-                            Durative_marker + 
-                            (1|author_grouped), 
-                          family=binomial(link = "logit"), 
-                          data=keep)
 
-summary(Fixed_and_Random)
-plot(allEffects(Fixed_and_Random))
+#### How have the constructions grammaticalized over the generations? ####
 
-# Without random effect
-Fixed_Only <- glm(as.factor(Construction) ~
-                    Animacy + 
-                    Verb_innovation +
-                    Bondedness + 
-                    Motion_verb +
-                    Durative_marker, 
-                  family=binomial(link="logit"), 
-                  data=keep)
+# Convert generation to factor
+keep$generation <- as.factor(keep$generation) 
 
-summary(Fixed_Only) # Higher AIC --> model is worse
-plot(allEffects(Fixed_Only))
+# Helmert coding to compare the generations
+contrasts(keep$generation) <- contr.helmert(4) 
+
+# Make model
+gen_model <- lm(StandScores ~ generation, data = keep)
+summary(gen_model)
+plot(allEffects(gen_model))
+
+gen_construction_model <- lm(StandScores ~ generation*Construction, data = keep)
+summary(gen_construction_model)
+plot(allEffects(gen_construction_model))
+
+# Make plots
+
+#+++++++++++++++++++++++++
+# Function to calculate the mean and the standard deviation
+# for each group
+#+++++++++++++++++++++++++
+# data : a data frame
+# varname : the name of a column containing the variable
+# to be summariezed
+# groupnames : vector of column names to be used as
+# grouping variables
+data_summary <- function(data, varname, groupnames){
+  require(plyr)
+  summary_func <- function(x, col){
+    c(mean = mean(x[[col]], na.rm=TRUE),
+      sd = sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func,
+                  varname)
+  data_sum <- plyr::rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+#++++++++++++++++++++++++++
+# Plot: intransitive vs transitive
+
+# Calculate mean and standard deviation for transitive and intransitive construction
+keep_summary <- data_summary(keep, 
+                             varname="Score", 
+                             groupnames=c("Construction", "generation"))
+
+# Plot
+print(score_plot <- ggplot(keep_summary, aes(x = generation, y = Score, linetype = Construction, shape = Construction, group = Construction)) +
+              xlab("Generation") +
+              ylab("Score") +
+              ylim(0, 6) +
+              geom_line() +
+              geom_point() +
+              geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
+              guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction")))
+
+# Plot: intransitive, transitive and aggregated
+
+# Calculate mean and standard deviation for both constructions together
+both_constructions <- data_summary(keep, varname = "Score", groupnames = "generation")
+
+# Add a column to indicate both constructions
+both_constructions$Construction <- "Both"
+
+# Combine data summaries
+keep_summary <- rbind(keep_summary, both_constructions)
+
+# Plot
+print(score_full_plot <- ggplot(keep_summary, aes(x = generation, y = Score, linetype = Construction, shape = Construction, group = Construction)) +
+        xlab("Generation") +
+        ylab("Score") +
+        ylim(0, 6) +
+        geom_line() +
+        geom_point() +
+        geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
+        guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction")))
+
+
+#### Extra plots ####
+
+# Individual authors
+
+# Calculate the proportion of intransitive construction for each author and decade
+proportion_data <- keep %>%
+  filter(author_grouped != "others") %>%
+  group_by(author_grouped, textDecade) %>%
+  dplyr::summarize(Proportion = sum(Construction == "Intransitive") / n())
+
+# Plot
+ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_grouped)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Decade", y = "Proportion of intransitive construction") +
+  facet_wrap(~ author_grouped, ncol = 3) +  # Create separate plots for each author
+  theme_minimal() +
+  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1")) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
 
 # Make bivariate plots
 Animacy <- table(keep$Construction, keep$Animacy)
@@ -152,83 +229,4 @@ plot(Durative_marker,
      ylab = "Durative marker",
      main = "")
 
-#### Question 2: How have the constructions grammaticalized over the generations? ####
-
-# Standardizing the scores
-keep$StandScores <- (keep$Score-mean(keep$Score))/sd(keep$Score)
-
-# Convert generation to factor
-keep$generation <- as.factor(keep$generation) 
-
-# Helmert coding to compare the generations
-contrasts(keep$generation) <- contr.helmert(4) 
-
-# Make model
-t <- lm(StandScores ~ generation*Construction, data = keep)
-summary(t)
-plot(allEffects(t))
-
-# Make plots
-
-#+++++++++++++++++++++++++
-# Function to calculate the mean and the standard deviation
-# for each group
-#+++++++++++++++++++++++++
-# data : a data frame
-# varname : the name of a column containing the variable
-# to be summariezed
-# groupnames : vector of column names to be used as
-# grouping variables
-data_summary <- function(data, varname, groupnames){
-  require(plyr)
-  summary_func <- function(x, col){
-    c(mean = mean(x[[col]], na.rm=TRUE),
-      sd = sd(x[[col]], na.rm=TRUE))
-  }
-  data_sum<-ddply(data, groupnames, .fun=summary_func,
-                  varname)
-  data_sum <- plyr::rename(data_sum, c("mean" = varname))
-  return(data_sum)
-}
-
-#++++++++++++++++++++++++++
-
-keep_summary <- data_summary(keep, 
-                             varname="Score", 
-                             groupnames=c("Construction", "generation"))
-
-print(gen_plot <- ggplot(keep_summary, 
-                         aes(x = generation, 
-                             y = Score, 
-                             color = Construction,
-                             group = Construction))+
-        xlab("Generation")+
-        ylab("Score")+
-        ylim(0, 6) +
-        geom_line()+
-        geom_point() +
-        geom_errorbar(aes(ymin=Score-sd, 
-                          ymax=Score+sd), 
-                      width=.2,
-                      position=position_dodge(0.01))+ 
-        guides(color=guide_legend(title="Construction")))
-
-
-#### Individuals ####
-
-# Calculate the proportion of intransitive construction for each author and decade
-proportion_data <- keep %>%
-  filter(author_grouped != "others") %>%
-  group_by(author_grouped, textDecade) %>%
-  dplyr::summarize(Proportion = sum(Construction == "Intransitive") / n())
-
-# Plot
-ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_grouped)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Decade", y = "Proportion of intransitive construction") +
-  facet_wrap(~ author_grouped, ncol = 3) +  # Create separate plots for each author
-  theme_minimal() +
-  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
