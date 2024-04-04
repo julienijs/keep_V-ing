@@ -14,8 +14,6 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
-#### General information about the dataset ####
-
 # Check number of attestations per generation
 generation_table <- table(keep$generation)
 print(generation_table)
@@ -23,50 +21,56 @@ print(generation_table)
 # Drop 5th generation (too little attestations)
 keep <- subset(keep, generation!=5)
 
-generation_histogram <- barplot(generation_table, ylab = "Number of attestations",  
-                                xlab = "Generation",
-                                main ="Histogram of the number of attestations per generation",
-                                col = "grey", 
-                                ylim = c(0, 120))
-
-# Histogram of the raw scores
-score_table <- table(keep$Score)
-mean(keep$Score)
-sd(keep$Score)
-barplot(score_table,
-        main = "Histogram of the number of attestations per score",
-        ylab = "Number of attestations",
-        xlab = "Summative grammaticalization scores",
-        ylim = c(0, 160))
-
 # Type of keep constructions per generation
 Generation <- table(keep$Construction, keep$generation)
 print(Generation)
-chisq.test(Generation)
-plot(Generation,
-     xlab = "Construction",
-     ylab = "Generation",
-     main = "")
 
 # Number attestations per author
 author_table <- table(keep$author)
 print(author_table) # some authors occur very frequently, others a lot less
 
+
+#### Grammaticalization Scores ####
+
+keep$Score <- keep$Adj_score + 
+              keep$Verb_score + 
+              keep$Durative_score +
+              keep$Aktionsart_score + 
+              keep$Animacy_subject_score +
+              keep$Bondedness_score +
+              keep$Adjectiveness_score +
+              keep$Voluntariness_score
+
+# Histogram of the scores
+histogram_facet <- ggplot(keep, aes(x = Score)) +
+  geom_bar(stat = "count", color = "black") +
+  labs(x = "Score", y = "Frequency", title = "Histogram of the summative grammaticalization scores") +
+  facet_wrap(~ Construction)
+
+print(histogram_facet)
+
+# Calculate the mean score and standard deviation per construction level
+construction_summary <- keep %>%
+  group_by(Construction) %>%
+  summarise(mean_score = mean(Score),
+            sd_score = sd(Score))
+
+# Print the summary
+print(construction_summary)
+
 #### Grammaticalization scores over time ####
 
-# Standardizing the scores
-keep$StandScores <- (keep$Score-mean(keep$Score))/sd(keep$Score)
-keep$StandAnimacy_score <- (keep$Animacy_score-mean(keep$Animacy_score))/sd(keep$Animacy_score)
-keep$StandDurative_score <- (keep$Durative_score-mean(keep$Durative_score))/sd(keep$Durative_score)
-keep$StandBondedness_score <- (keep$Bondedness_score-mean(keep$Bondedness_score))/sd(keep$Bondedness_score)
-keep$StandMotion_score <- (keep$Motion_score-mean(keep$Motion_score))/sd(keep$Motion_score)
-keep$StandVerb_score <- (keep$Verb_score-mean(keep$Verb_score))/sd(keep$Verb_score)
-keep$StandAdjective_score <- (keep$Adjective_score-mean(keep$Adjective_score))/sd(keep$Adjective_score)
-
 # Score vs text date
-Decade_model <- lm(StandScores ~ textDecade, data = keep)
-summary(Decade_model)
-plot(allEffects(Decade_model))
+score_date_model <- lm(Score ~ textDate, data = keep)
+summary(score_date_model)
+plot(allEffects(score_date_model))
+
+aggregate_plot <- ggplot(keep, aes(x = textDecade, y =Score, shape = as.factor(generation))) +
+  geom_jitter() +
+  labs(x = "Year of attestation", y = "Summative grammaticalization score", title = "", shape = "Generations") +
+  facet_wrap(~ Construction)
+
+print(aggregate_plot)
 
 # Text date vs grammaticalization variables
 Score_model <- lm(textDecade ~
@@ -81,10 +85,9 @@ summary(Score_model)
 plot(allEffects(Score_model))
 
 # Create a line plot
-ggplot(keep, aes(x = textDecade, y = StandAnimacy_score)) +
-  geom_point() +
+ggplot(keep, aes(x = textDecade, y = StandVerb_score)) +
+  geom_smooth() +
   labs(x = "Text Decade", y = "Animacy Score", title = "Text Decade vs. Animacy Score")
-
 
 
 #### How have the constructions grammaticalized over the generations? ####
