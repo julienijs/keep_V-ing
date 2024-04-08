@@ -1,11 +1,12 @@
-# Loading libraries and packages
-
-install.packages(c("glmnet", "doMC"))
+#### Read libraries ####
 library(readxl)
-
-# from https://github.com/AntheSevenants/ElasticToolsR :
-source("Dataset.R")
-source("ElasticNet.R")
+library(stats)
+library(dplyr)
+library(lme4)
+library(ggplot2)
+library(car)
+library(glmnet)
+library(tibble)
 
 #### Read dataset ####
 keep <- read_xlsx("Keep_Ving_Dataset.xlsx", 
@@ -15,120 +16,149 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
-subset <- keep[, c("Construction", "author", "Animacy", "Verb_innovation", "Motion_verb", "Adjective", "Bondedness", "Continuative_marker")]
+#### Grammaticalization variable selection with elastic net regression ####
 
-# Convert author & Change to factor
-subset$Construction <- as.factor(subset$Construction)
-subset$author <- as.factor(subset$author)
-subset$Animacy <- as.factor(subset$Animacy)
-subset$Verb_innovation <- as.factor(subset$Verb_innovation)
-subset$Motion_verb <- as.factor(subset$Motion_verb)
-subset$Adjective <- as.factor(subset$Adjective)
-subset$Bondedness <- as.factor(subset$Bondedness)
-subset$Continuative_marker <- as.factor(subset$Continuative_marker)
+# Predictor variables
+X <- as.matrix(keep[, c("Adj_score", "Verb_score", "Durative_score", "Aktionsart_score", 
+                        "Animacy_subject_score", "Bondedness_score", "Adjectiveness_score", 
+                        "Voluntariness_score")])
 
-ds <- dataset(df=subset,
-              response_variable_column="Construction",
-              to_binary_columns=c("author"),
-              other_columns=c("Animacy", "Verb_innovation", "Motion_verb", "Adjective", "Bondedness", "Continuative_marker"))
+# Dependent variable
+y <- keep$textDate  
 
-# Convert the data to a feature matrix
-feature_matrix <- ds$as_matrix()
+# Set seed for reproducibility
+set.seed(50)
 
-# Retrieve feature list
-feature_list <- ds$as_feature_list()
+# Define alphas to test
+alphas <- seq(0, 1, by = 0.1)
 
-#### Perform elastic net regression ####
+# Initialize an empty dataframe to store results
+results <- tibble(alpha = numeric(), lambda = numeric(), mse = numeric(), non_zero = numeric())
 
-# Define net object
-net <- elastic_net(ds=ds,
-                   nfolds=20,
-                   type.measure="class")
-
-models <- net$do_elastic_net_regression_auto_alpha(k=10)
-
-models$results
-#models$fits
-
-fit <- net$do_elastic_net_regression(alpha=0.4)
-
-coefficients_with_labels <- net$attach_coefficients(fit)
-
-# Save to csv
-write.csv(coefficients_with_labels, "elastic_net_output.csv", row.names=FALSE)
-
-#### Visualization with probabilities ####
-
-barplot(coefficients_with_labels$coefficient, 
-        names.arg = coefficients_with_labels$feature, 
-        col = "lightblue")
-
-# Logistic function to convert log-odds to probabilities
-logistic <- function(x) {
-  1 / (1 + exp(-x))
+# Set up the cross-validation loop
+for (i in seq_along(alphas)) {
+  alpha <- alphas[i]
+  
+  # Fit the model using cross-validation: mean squared error --> cv.glmnet()
+  cvfit <- cv.glmnet(X, y, alpha = alpha, type.measure = "mse")
+  
+  # Extract the lambda value for minimum MSE
+  lambda_min <- cvfit$lambda.min
+  
+  # Extract mean squared error for lambda.min
+  mse_min <- cvfit$cvm[which(cvfit$lambda == lambda_min)]
+  
+  # Extract non-zero coefficients
+  non_zero <- cvfit$nzero[which(cvfit$lambda == lambda_min)]
+  
+  # Combine alpha, lambda, mse, and non-zero coefficients into a dataframe
+  alpha_lambda_mse <- tibble(
+    alpha = alpha,
+    lambda = lambda_min,
+    mse = mse_min,
+    non_zero = non_zero
+  )
+  
+  # Append to results dataframe
+  results <- bind_rows(results, alpha_lambda_mse)
 }
 
-# Calculate the predicted probabilities for the new observation
-probabilities <- logistic(coefficients_with_labels$coefficient)
+# Print results
+print(results)
 
-# Create scatter plot with probabilities
-plot(x = probabilities, y = seq_along(probabilities), pch = 16, col = "black",
-     xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n", yaxt = "n")
+# Train model with best alpha and lambda from results
+variables_enet_model <- glmnet(X, y, alpha = 0.6, lambda = lambda_min)
 
-# Add feature labels
-text(x = probabilities, y = seq_along(probabilities), 
-     labels = coefficients_with_labels$feature, pos = 4, cex = 0.8)
+# Get coefficients
+coefficients <- coef(variables_enet_model)
 
-# Customize x-axis labels with adjusted position
-axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
-     adj = 0.5)
+# Print coefficients
+print(coefficients)
 
-#### Visualization when the subject is inanimate ####
+# Extract coefficients and variable names
+coef_values <- as.matrix(coefficients)[-1, ]  # Exclude intercept
+variable_names <- names(coef_values)
 
-# Find the coefficient of _is_Inanimate
-is_inanimate_coefficient <- coefficients_with_labels$coefficient[coefficients_with_labels$feature == "_is_Inanimate"]
+# Convert coefficients to a data frame
+coef_df <- data.frame(variable = variable_names, coefficient = coef_values)
 
-# Calculate probabilities when subject is inanimate
-coefficients_with_inanimate <- coefficients_with_labels$coefficient + is_inanimate_coefficient
-probabilities_with_inanimate <- logistic(coefficients_with_inanimate)
+# Arrange the data frame by coefficient value in descending order
+coef_df <- coef_df %>%
+  arrange(desc(coefficient))
 
-# Create scatter plot with probabilities including the effect of _is_Inanimate
-plot(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimate), pch = 16, col = "black",
-     xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n", yaxt = "n")
+# Create scatter plot with flipped axes
+ggplot(coef_df, aes(x = coefficient, y = reorder(variable, coefficient))) +
+  geom_point(color = "black") +
+  labs(title = "",
+       x = "Coefficient Value", y = "Predictor Variables") +
+  theme(axis.text.y = element_text(hjust = 1, vjust = 0.5))
 
-# Add feature labels
-text(x = probabilities_with_inanimate, y = seq_along(probabilities_with_inanimate), 
-     labels = coefficients_with_labels$feature, pos = 4, cex = 0.8)
+#### Author level ####
 
-# Customize x-axis labels with adjusted position
-axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
-     adj = 0.5)
+# One-hot encode author
+encoded_authors <- model.matrix(~ author - 1, data = keep)
 
+# Prepare the data
+X_authors <- encoded_authors  # Predictor variables
+y_score <- keep$Score  # Dependent variable
 
-#### Visualization when the verb is innovative ####
+# Define alphas to test
+alphas <- seq(0, 1, by = 0.1)
 
-# Find the coefficient of _is_Innovative_verb
-is_innovative_coefficient <- coefficients_with_labels$coefficient[coefficients_with_labels$feature == "_is_Innovative verb"]
+# Initialize an empty dataframe to store results
+results_authors <- tibble(alpha = numeric(), lambda = numeric(), mse = numeric(), non_zero = numeric())
 
-# Calculate probabilities when verb is innovative
-coefficients_with_innovative <- coefficients_with_labels$coefficient + is_innovative_coefficient
-probabilities_with_innovative <- logistic(coefficients_with_innovative)
+# Set up the cross-validation loop
+for (i in seq_along(alphas)) {
+  alpha <- alphas[i]
+  
+  # Fit the model using cross-validation: mean squared error --> cv.glmnet()
+  cvfit <- cv.glmnet(X_authors, y_score, alpha = alpha, type.measure = "mse")
+  
+  #Extract the lambda value for minimum MSE
+  lambda_min <- cvfit$lambda.min
+  
+  # Extract mean squared error for lambda.min
+  mse_min <- cvfit$cvm[which(cvfit$lambda == lambda_min)]
+  
+  # Extract non-zero coefficients
+  non_zero <- cvfit$nzero[which(cvfit$lambda == lambda_min)]
+  
+  # Combine alpha, lambda, mse, and non-zero coefficients into a dataframe
+  alpha_lambda_mse <- tibble(
+    alpha = alpha,
+    lambda = lambda_min,
+    mse = mse_min,
+    non_zero = non_zero
+  )
+  
+  # Append to results dataframe
+  results_authors <- bind_rows(results_authors, alpha_lambda_mse)
+}
 
-# Create scatter plot with probabilities including the effect of _is_Innovative_verb
-plot(x = probabilities_with_innovative, y = seq_along(probabilities_with_innovative), pch = 16, col = "black",
-     xlab = "", ylab = "",
-     xlim = c(0, 1), xaxt = "n", yaxt = "n")
+# Print results
+print(results_authors)
 
-# Add feature labels
-text(x = probabilities_with_innovative, y = seq_along(probabilities_with_innovative), 
-     labels = coefficients_with_labels$feature, pos = 2, cex = 0.8)
+# Refit the model with the best lambda
+authors_enet_model <- glmnet(X_authors, y_score, alpha = 0.2, lambda = 0.112)
 
-# Customize x-axis labels with adjusted position
-axis(1, at = seq(0, 1, by = 0.1), 
-     labels = c("Transitive", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "Intransitive"), 
-     adj = 0.5)
+# Get coefficients
+author_coefficients <- coef(authors_enet_model)
 
+# Extract coefficients and author names
+author_coef_values <- as.matrix(author_coefficients)[-1, ]  # Exclude intercept
+author_names <- names(author_coef_values)
+
+# Convert coefficients to a data frame
+author_coef_df <- data.frame(variable = author_names, coefficient = author_coef_values)
+
+# Arrange the data frame by coefficient value in descending order
+author_coef_df <- author_coef_df %>%
+  arrange(desc(coefficient))
+
+# Create scatter plot with flipped axes
+ggplot(author_coef_df, aes(x = coefficient, y = reorder(variable, coefficient))) +
+  geom_point(color = "black") +
+  labs(title = "",
+       x = "Coefficient Value", y = "Authors") +
+  theme(axis.text.y = element_text(hjust = 1, vjust = 0.5))

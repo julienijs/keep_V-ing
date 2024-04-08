@@ -5,6 +5,7 @@ library(stats)
 library(dplyr)
 library(lme4)
 library(ggplot2)
+library(car)
 
 #### Read dataset ####
 keep <- read_xlsx("Keep_Ving_Dataset.xlsx", 
@@ -58,13 +59,17 @@ construction_summary <- keep %>%
 # Print the summary
 print(construction_summary)
 
-#### Grammaticalization scores over time ####
+#### Aggregate level ####
 
 # Score vs text date
 score_date_model <- lm(Score ~ textDate, data = keep)
 summary(score_date_model)
-plot(allEffects(score_date_model))
 
+# Score vs construction
+score_construction_model <- lm(Score ~ Construction + textDecade, data = keep)
+summary(score_construction_model)
+
+# Visualization
 aggregate_plot <- ggplot(keep, aes(x = textDecade, y =Score, shape = as.factor(generation))) +
   geom_jitter() +
   labs(x = "Year of attestation", y = "Summative grammaticalization score", title = "", shape = "Generations") +
@@ -72,42 +77,43 @@ aggregate_plot <- ggplot(keep, aes(x = textDecade, y =Score, shape = as.factor(g
 
 print(aggregate_plot)
 
+#### Grammaticalization variables ####
+
 # Text date vs grammaticalization variables
-Score_model <- lm(textDecade ~
-                    StandAnimacy_score +
-                    StandDurative_score +
-                    StandBondedness_score +
-                    StandMotion_score +
-                    StandVerb_score +
-                    StandAdjective_score,
+score_model <- lm(textDate ~
+                    Adj_score + 
+                    Verb_score + 
+                    Durative_score +
+                    Aktionsart_score + 
+                    Animacy_subject_score +
+                    Bondedness_score +
+                    Adjectiveness_score +
+                    Voluntariness_score,
                   data = keep)
-summary(Score_model)
-plot(allEffects(Score_model))
+summary(score_model)
+plot(allEffects(score_model))
+     
+# Check for multicollinearity
+vif_scores <- vif(score_model)
+print(vif_scores)
 
-# Create a line plot
-ggplot(keep, aes(x = textDecade, y = StandVerb_score)) +
-  geom_smooth() +
-  labs(x = "Text Decade", y = "Animacy Score", title = "Text Decade vs. Animacy Score")
 
-
-#### How have the constructions grammaticalized over the generations? ####
-
+#### Generation level ####
 # Convert generation to factor
-keep$generation <- as.factor(keep$generation) 
+keep$generation_factor <- as.factor(keep$generation) 
 
 # Helmert coding to compare the generations
-contrasts(keep$generation) <- contr.helmert(4) 
+contrasts(keep$generation_factor) <- contr.helmert(4) 
 
-# Make model
-gen_model <- lm(StandScores ~ generation, data = keep)
-summary(gen_model)
-plot(allEffects(gen_model))
+# Score vs generation
+generation_model <- lm(Score ~ generation_factor + Construction, data = keep)
+summary(generation_model)
+plot(allEffects(generation_model))
 
-gen_construction_model <- lm(StandScores ~ generation*Construction, data = keep)
-summary(gen_construction_model)
-plot(allEffects(gen_construction_model))
-
-# Make plots
+# Score vs generation in interaction with construction
+generation_construction_model <- lm(Score ~ generation_factor*Construction, data = keep)
+summary(generation_construction_model)
+plot(allEffects(generation_construction_model))
 
 #+++++++++++++++++++++++++
 # Function to calculate the mean and the standard deviation
@@ -138,15 +144,17 @@ keep_summary <- data_summary(keep,
                              varname="Score", 
                              groupnames=c("Construction", "generation"))
 
-# Plot
-print(score_plot <- ggplot(keep_summary, aes(x = generation, y = Score, linetype = Construction, shape = Construction, group = Construction)) +
-              xlab("Generation") +
-              ylab("Score") +
-              ylim(0, 6) +
-              geom_line() +
-              geom_point() +
-              geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
-              guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction")))
+# Visualization
+generation_plot <- ggplot(keep_summary, aes(x = generation, y = Score, linetype = Construction, shape = Construction, group = Construction)) +
+  xlab("Generation") +
+  ylab("Score") +
+  ylim(0, 6) +
+  geom_line() +
+  geom_point() +
+  geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
+  guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction"))
+
+print(generation_plot)
 
 # Plot: intransitive, transitive and aggregated
 
@@ -159,7 +167,7 @@ both_constructions$Construction <- "Both"
 # Combine data summaries
 keep_summary <- rbind(keep_summary, both_constructions)
 
-# Plot
+# Visualization
 print(score_full_plot <- ggplot(keep_summary, aes(x = generation, y = Score, linetype = Construction, shape = Construction, group = Construction)) +
         xlab("Generation") +
         ylab("Score") +
@@ -168,68 +176,3 @@ print(score_full_plot <- ggplot(keep_summary, aes(x = generation, y = Score, lin
         geom_point() +
         geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
         guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction")))
-
-
-#### Extra plots ####
-
-# Individual authors
-
-# Calculate the proportion of intransitive construction for each author and decade
-proportion_data <- keep %>%
-  filter(author_grouped != "others") %>%
-  group_by(author_grouped, textDecade) %>%
-  dplyr::summarize(Proportion = sum(Construction == "Intransitive") / n())
-
-# Plot
-ggplot(proportion_data, aes(x = textDecade, y = Proportion, group = author_grouped)) +
-  geom_line() +
-  geom_point() +
-  labs(x = "Decade", y = "Proportion of intransitive construction") +
-  facet_wrap(~ author_grouped, ncol = 3) +  # Create separate plots for each author
-  theme_minimal() +
-  scale_y_continuous(breaks = c(0, 0.5, 1), labels = c("0", "0.5" ,"1")) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-
-# Make bivariate plots
-Animacy <- table(keep$Construction, keep$Animacy)
-print(Animacy)
-chisq.test(Animacy)
-plot(Animacy,
-     xlab = "Construction",
-     ylab = "Animacy",
-     main = "")
-
-Verb_innovation <- table(keep$Construction, keep$Verb_innovation)
-print(Verb_innovation)
-chisq.test(Verb_innovation)
-plot(Verb_innovation,
-     xlab = "Construction",
-     ylab = "Innovativeness of the ing-form",
-     main = "")
-
-Bondedness <- table(keep$Construction, keep$Bondedness)
-print(Bondedness)
-chisq.test(Bondedness)
-plot(Bondedness,
-     xlab = "Construction",
-     ylab = "Bondedness",
-     main = "")
-
-Motion_verb <- table(keep$Construction, keep$Motion_verb)
-print(Motion_verb)
-chisq.test(Motion_verb)
-plot(Motion_verb,
-     xlab = "Construction",
-     ylab = "Motion verb",
-     main = "")
-
-Durative_marker <- table(keep$Construction, keep$Durative_marker)
-print(Durative_marker)
-chisq.test(Durative_marker)
-plot(Durative_marker,
-     xlab = "Construction",
-     ylab = "Durative marker",
-     main = "")
-
-
