@@ -16,6 +16,18 @@ keep <- read_xlsx("Keep_Ving_Dataset.xlsx",
 # Drop "double" annotations used for collexeme analysis
 keep <- subset(keep, ID!="double")
 
+
+#### Grammaticalization Scores ####
+
+keep$Score <- keep$Adj_score + 
+  keep$Verb_score + 
+  keep$Durative_score +
+  keep$Aktionsart_score + 
+  keep$Animacy_subject_score +
+  keep$Bondedness_score +
+  keep$Adjectiveness_score +
+  keep$Voluntariness_score
+
 #### Grammaticalization variable selection with elastic net regression ####
 
 # Predictor variables
@@ -89,7 +101,7 @@ coef_df <- coef_df %>%
 # Create scatter plot with flipped axes
 ggplot(coef_df, aes(x = coefficient, y = reorder(variable, coefficient))) +
   geom_point(color = "black") +
-  labs(title = "",
+  labs(title = "Elastic net regression with year of attestation as dependent variable",
        x = "Coefficient Value", y = "Predictor Variables") +
   theme(axis.text.y = element_text(hjust = 1, vjust = 0.5))
 
@@ -156,9 +168,12 @@ author_coef_df <- data.frame(variable = author_names, coefficient = author_coef_
 author_coef_df <- author_coef_df %>%
   arrange(desc(coefficient))
 
+# Clean up data frame
+author_coef_df$variable <- sub("^author", "", author_coef_df$variable)
+
 # Create scatter plot with flipped axes
 ggplot(author_coef_df, aes(x = coefficient, y = reorder(variable, coefficient))) +
   geom_point(color = "black") +
-  labs(title = "",
+  labs(title = "Elastic net regression with summative grammaticalization score as dependent variable",
        x = "Coefficient Value", y = "Authors") +
   theme(axis.text.y = element_text(hjust = 1, vjust = 0.5))
