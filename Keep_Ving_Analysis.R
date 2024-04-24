@@ -79,9 +79,6 @@ print(aggregate_plot)
 
 #### Grammaticalization variables ####
 
-Intrans_df <- subset(keep, Construction!="Transitive")
-Trans_df <- subset(keep, Construction!="Intransitive")
-
 # Text date vs grammaticalization variables
 score_model <- lm(textDate ~
                     Adj_score + 
@@ -179,17 +176,5 @@ print(score_full_plot <- ggplot(keep_summary, aes(x = generation, y = Score, lin
         geom_point() +
         geom_errorbar(aes(ymin = Score - sd, ymax = Score + sd), width = .2, position = position_dodge(0.01)) +
         guides(linetype = guide_legend(title = "Construction"), shape = guide_legend(title = "Construction")))
-
-
-#### Bivariate analyses ####
-
-prop.table(table(keep$generation, keep$Adjectiveness_score, keep$Construction))
-prop.table(table(keep$generation, keep$Animacy_subject, keep$Construction))
-prop.table(table(keep$generation, keep$Bondedness_binary, keep$Construction))
-prop.table(table(keep$generation, keep$Verb_innovation, keep$Construction))
-prop.table(table(keep$generation, keep$Durative_Iterative, keep$Construction))
-prop.table(table(keep$generation, keep$Aktionsart, keep$Construction))
-prop.table(table(keep$generation, keep$Voluntariness, keep$Construction))
-
 
 
