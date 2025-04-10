@@ -11,15 +11,14 @@ See also [this repository](https://github.com/julienijs/Search_EMMA_Corpus) for 
 ## Data and code
 
 The data was collected from the EMMA corpus (Petré et al. 2019). Like Petré and Van de Velde (2018) this study relies on grammaticalization scores to create a distributional profile of the two constructions with *keep*. Seven variables were taken into account: 
-1. innovativeness of the ing-form (top 15 collocates) 
-2. bondedness
-3. inclusion of an explicit continuative marker
-4. animacy of the subject
-5. presence of a motion verb
-6. coordination with an adjective
-
-![Construction vs generation](https://github.com/julienijs/keep_V-ing/assets/107923146/537fd3e5-94ba-46ee-a56d-97add7ead98b)
-
+a)	innovativeness of the -ing participle
+b)	adjectiveness of the -ing participle
+c)	coordination with an adjective
+d)	animacy of the subject
+e)	aktionsart
+f)	durative/iterative
+g)	voluntariness
+h)	bondedness
 
 ## References:
 - De Smet, Hendrik. 2013. *Spreading Patterns: diffusional change in the English system of complementation*. Oxford: Oxford University Press.
