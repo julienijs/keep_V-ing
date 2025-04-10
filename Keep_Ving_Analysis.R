@@ -33,18 +33,34 @@ print(author_table) # some authors occur very frequently, others a lot less
 
 #### Grammaticalization Scores ####
 
-keep$Score <- keep$Adj_score + 
-              keep$Verb_score + 
-              keep$Durative_score +
-              keep$Aktionsart_score + 
-              keep$Animacy_subject_score +
-              keep$Bondedness_score +
-              keep$Adjectiveness_score +
-              keep$Voluntariness_score
+adj_data <- read_xlsx("adjectivalness_analysis.xlsx", 
+                      sheet=1, 
+                      col_names = TRUE)
+
+keep <- merge(keep, adj_data, by.x = "ing_form", by.y = "Word", all.x = TRUE)
+
+
+
+collexeme_data <- read_xlsx("collexemes_keep.xlsx", 
+                            sheet=1, 
+                            col_names = TRUE)
+
+keep <- merge(keep, collexeme_data, by.x = "Verb", by.y = "words", all.x = TRUE)
+
+keep$Adjectiveness <- 1 - keep$Adjectiveness
+
+keep$Score <- keep$Adj_score +
+  keep$Durative_score +
+  keep$Aktionsart_score + 
+  keep$Animacy_subject_score +
+  keep$Bondedness_score +
+  keep$Voluntariness_score +
+  keep$Adjectiveness +
+  keep$Innovativeness_score
 
 # Histogram of the scores
 histogram_facet <- ggplot(keep, aes(x = Score)) +
-  geom_bar(stat = "count", color = "black") +
+  geom_histogram(color = "black", fill = "lightblue", bins = 30) +  # Use histogram for numeric data
   labs(x = "Score", y = "Frequency", title = "Histogram of the summative grammaticalization scores") +
   facet_wrap(~ Construction)
 
@@ -66,8 +82,16 @@ score_date_model <- lm(Score ~ textDate, data = keep)
 summary(score_date_model)
 
 # Score vs construction
-score_construction_model <- lm(Score ~ Construction + textDecade, data = keep)
+score_construction_model <- lm(Score ~ Construction, data = keep)
 summary(score_construction_model)
+
+# Score vs construction and text date
+score_date_construction_model <- lm(Score ~ textDate + Construction, data = keep)
+summary(score_date_construction_model)
+
+# Score vs construction and text date
+score_date_construction_model <- lm(Score ~ Construction * textDate, data = keep)
+summary(score_date_construction_model)
 
 # Visualization
 aggregate_plot <- ggplot(keep, aes(x = textDecade, y =Score, shape = as.factor(generation))) +
@@ -82,12 +106,12 @@ print(aggregate_plot)
 # Text date vs grammaticalization variables
 score_model <- lm(textDate ~
                     Adj_score + 
-                    Verb_score + 
+                    Innovativeness_score + 
                     Durative_score +
                     Aktionsart_score + 
                     Animacy_subject_score +
                     Bondedness_score +
-                    Adjectiveness_score +
+                    Adjectiveness +
                     Voluntariness_score,
                   data = keep)
 summary(score_model)

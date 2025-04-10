@@ -31,20 +31,37 @@ keep <- subset(keep, generation!=5)
 
 #### Grammaticalization Scores ####
 
-keep$Score <- keep$Adj_score + 
-  keep$Verb_score + 
+adj_data <- read_xlsx("adjectivalness_analysis.xlsx", 
+                  sheet=1, 
+                  col_names = TRUE)
+
+keep <- merge(keep, adj_data, by.x = "ing_form", by.y = "Word", all.x = TRUE)
+
+
+
+collexeme_data <- read_xlsx("collexemes_keep.xlsx", 
+                      sheet=1, 
+                      col_names = TRUE)
+
+keep <- merge(keep, collexeme_data, by.x = "Verb", by.y = "words", all.x = TRUE)
+
+keep$Adjectiveness <- 1 - keep$Adjectiveness
+
+keep$Score <- keep$Adj_score +
   keep$Durative_score +
   keep$Aktionsart_score + 
   keep$Animacy_subject_score +
   keep$Bondedness_score +
-  keep$Adjectiveness_score +
-  keep$Voluntariness_score
+  keep$Voluntariness_score +
+  keep$Adjectiveness +
+  keep$Innovativeness_score
+
 
 #### Grammaticalization variable selection with elastic net regression ####
 
 # Predictor variables
 X <- as.matrix(keep[, c("Adj_score",
-                        "Verb_score",
+                        "Innovativeness_score",
                         "Durative_score",
                         "Aktionsart_score",
                         "Animacy_subject_score",
@@ -100,7 +117,7 @@ for (i in seq_along(alphas)) {
 print(results)
 
 # Get coefficients
-coefficients <- coef(fit_alpha_9, s = "lambda.min")
+coefficients <- coef(fit_alpha_3, s = "lambda.min") 
 
 # Print coefficients
 print(coefficients)
@@ -118,7 +135,7 @@ coef_keep <- coef_keep %>%
 
 # Rename variables for clean plot
 coef_keep$variable <- sub("Adj_score", "Adjective coordination", coef_keep$variable)
-coef_keep$variable <- sub("Verb_score", "Innovativeness of the verb", coef_keep$variable)
+coef_keep$variable <- sub("Innovativeness_score", "Innovativeness of the verb", coef_keep$variable)
 coef_keep$variable <- sub("Durative_score", "Durativity", coef_keep$variable)
 coef_keep$variable <- sub("Animacy_subject_score", "Aktionsart", coef_keep$variable)
 coef_keep$variable <- sub("Aktionsart_score", "Animacy", coef_keep$variable)
@@ -184,7 +201,7 @@ for (i in seq_along(alphas)) {
 print(results_authors)
 
 # Get coefficients
-author_coefficients <- coef(authorfit_alpha_10, s = "lambda.min")
+author_coefficients <- coef(authorfit_alpha_2, s = "lambda.min")
 
 # Print coefficients
 print(author_coefficients)
