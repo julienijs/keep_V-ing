@@ -66,7 +66,7 @@ X <- as.matrix(keep[, c("Adj_score",
                         "Aktionsart_score",
                         "Animacy_subject_score",
                         "Bondedness_score",
-                        "Adjectiveness_score",
+                        "Adjectiveness",
                         "Voluntariness_score")])
 
 correlation_matrix <- cor(X)
