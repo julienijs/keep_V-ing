@@ -136,7 +136,7 @@ coef_keep <- coef_keep %>%
 # Rename variables for clean plot
 coef_keep$variable <- sub("Adj_score", "Adjective coordination", coef_keep$variable)
 coef_keep$variable <- sub("Innovativeness_score", "Innovativeness of the verb", coef_keep$variable)
-coef_keep$variable <- sub("Durative_score", "Durativity", coef_keep$variable)
+coef_keep$variable <- sub("Durative_score", "Continuativity", coef_keep$variable)
 coef_keep$variable <- sub("Animacy_subject_score", "Aktionsart", coef_keep$variable)
 coef_keep$variable <- sub("Aktionsart_score", "Animacy", coef_keep$variable)
 coef_keep$variable <- sub("Bondedness_score", "Bondedness", coef_keep$variable)
